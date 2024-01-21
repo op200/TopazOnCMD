@@ -125,15 +125,17 @@ reInputffmpegCMD:
 	}
 
 	if(ffmpegCMD.find("/")!=string::npos){//检查"/"
-		cout<<"\n-输入的命令warring-\n<'/'可能非法>\n"
-			<<"选择  C:自动替换'/'  R:重新输入命令"<<endl;
-		if(system("choice /c cr")==1){
-			replaceAllSubstring(ffmpegCMD,":\\/",":\\"),replaceAllSubstring(ffmpegCMD,"/","\\");
-			cout<<"\n替换后的命令:\n"<<ffmpegCMD<<"\n\n选择  C:继续程序  R:重新输入命令"<<endl;
-			if(system("choice /c cr")==2)goto reInputffmpegCMD;
+		cout<<"\n-输入的命令warning-\n<'/'可能非法>\n"
+			<<"选择  C:自动替换'/'  R:重新输入命令  P:忽略warning"<<endl;
+		switch(system("choice /c crp")){
+			case 1:
+				replaceAllSubstring(ffmpegCMD,":\\/",":\\"),replaceAllSubstring(ffmpegCMD,"/","\\");
+				cout<<"\n替换后的命令:\n"<<ffmpegCMD<<"\n\n选择  C:继续程序  R:重新输入命令"<<endl;
+				if(system("choice /c cr")==2)goto reInputffmpegCMD;
+				break;
+			case 2:goto reInputffmpegCMD;
+			case 3:break;
 		}
-		else goto reInputffmpegCMD;
-
 	}
 
 
