@@ -1,0 +1,152 @@
+#include<iostream>
+#include<string>
+#include<algorithm>
+#include<fstream>
+#include<iomanip>
+#include<Windows.h>
+
+using namespace std;
+
+void exeExit(){
+	string input;
+	cout<<R"(输入"exit"退出程序)"<<endl;
+	for(;;){
+		getline(cin,input);
+		if(input=="exit")return;
+	}
+}
+
+int getSubstringNum(string inputStr,const char*Substring){//获取子串个数
+	size_t findStart,Num=0;
+	for(findStart=0;(findStart=inputStr.find(Substring,findStart)+1)-1!=string::npos;Num++);
+	return Num;
+}
+
+int main(){
+	system("color 70");
+	string
+		videoC_x265=R"(-c:v libx265 -pix_fmt yuv420p10le -x265-params )",
+		param1=R"(crf=19:qpmin=13:qpmax=24:me=star:merange=57:aq-strength=1.2:tu-intra-depth=4)",
+		param2=R"(:aq-mode=4:bframes=16:ref=8:rd=5:subme=3:rc-lookahead=80:sao=0:rect=1:amp=0)",
+		param3=R"(:rdoq-level=0:psy-rdoq=0.8:psy-rd=2:qcomp=0.72:weightb=1:deblock=-1,-1:min-keyint=2)",
+		param4=R"(:cbqpoffs=-1:crqpoffs=-1:keyint=250:pbratio=1.2)",
+		option01=videoC_x265+"\""+param1+param2+param3+param4+"\"",
+
+		option02=R"(-c:v h264_nvenc -preset lossless -pix_fmt yuv420p10le )";
+
+
+	{//读取ini，以配置环境变量
+		_putenv("line=———————————————————————————————————");
+		char fillCh='-';string inputStr;
+		ifstream ini;
+		ini.open("Topaz on CMD.ini");
+		cout<<left<<setfill('*')<<setw(160)<<"读取到的环境变量设置如下:"<<endl;
+		for(;getline(ini,inputStr);putchar('\n')){
+
+			if(fillCh=='+')fillCh='-';else fillCh='+';
+			cout<<left<<setfill(fillCh)<<setw(120)<<"\""+inputStr+"\"";
+
+			if(_putenv(inputStr.c_str()))
+				cout<<"配置失败";
+			else cout<<"配置成功";
+
+		}
+		ini.close();
+		cout<<left<<setfill('*')<<setw(160)<<"读取结束<END>"<<endl;
+	}
+
+	//输出ffmpeg版本
+	cout<<"\n\n"<<left<<setfill('*')<<setw(120)<<"TVAI_ffmpeg版本为:"<<endl;
+	system("%TVAI_ffmpeg% -version");
+	cout<<"\n\n"<<left<<setfill('*')<<setw(120)<<"Output_ffmpeg版本为:"<<endl;
+	system("%Output_ffmpeg% -version");
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),FOREGROUND_INTENSITY|FOREGROUND_RED);
+	cout<<left<<setfill('*')<<setw(120)<<"仔细检查各项信息，确认无误后再进行下一步!"<<endl;
+	{
+		string input;
+		cout<<R"(输入"continue"继续程序)"<<endl;
+		for(;;){
+			getline(cin,input);
+			if(input=="continue")break;
+		}
+	}
+	system("color 70");
+	system("cls");
+
+
+	//传入ffmpeg命令
+	string ffmpegCMD;
+	cout<<"输入ffmpeg命令:\n";
+	getline(cin,ffmpegCMD);
+
+
+	//检查命令合法性
+	int CvideoNum=getSubstringNum(ffmpegCMD,R"("-c:v")");
+	if(CvideoNum<1){
+		cout<<"-输入的命令有bug-\n<视频编码器位置缺失>\n(!未知错误)"<<endl;
+		exeExit();
+		return 1;
+	}
+	else if(CvideoNum>1){
+		cout<<"-输入的命令有bug-\n<视频编码器位置("<<CvideoNum<<")大于1>\n(!检查Topaz设置)"<<endl;
+		exeExit();
+		return 1;
+	}
+
+	int CaudioNum=getSubstringNum(ffmpegCMD,R"("-an")");
+	if(CaudioNum<1){
+		cout<<"-输入的命令有bug-\n<静音命令位置缺失>\n(!仅支持静音输出\n!检查Topaz设置)"<<endl;
+		exeExit();
+		return 1;
+	}
+	else if(CaudioNum>1){
+		cout<<"-输入的命令有bug-\n<静音命令位置("<<CaudioNum<<")大于1>\n(!未知错误)"<<endl;
+		exeExit();
+		return 1;
+	}
+
+
+	//替换子串
+	cout<<"输入编号(整数)以选择option:\n"
+		<<"编号  说明\n"
+		<<"01:   x265 快速\n"
+		<<"02:   h264_nvenc-lossless\n"
+		<<endl;
+	int optionNum;
+reselectOptionNum:
+	cin>>optionNum;
+	while(cin.fail()){
+		cin.clear();
+		cin.ignore();
+		cout<<"非法输入!"<<endl;
+		cin>>optionNum;
+	}
+	string*replaceOption;
+	switch(optionNum){
+		case 1:
+			replaceOption=&option01;break;
+		case 2:
+			replaceOption=&option02;break;
+		default:
+			cout<<"该option不存在!"<<endl;
+			goto reselectOptionNum;
+	}
+	size_t replaceStart=ffmpegCMD.find(R"("-c:v")"),replaceEnd=ffmpegCMD.find(R"("-an")");
+	ffmpegCMD.replace(replaceStart,replaceEnd-replaceStart-1," -pix_fmt yuv422p ");
+	ffmpegCMD.replace(ffmpegCMD.find("ffmpeg"),6,"%TVAI_ffmpeg%");
+	ffmpegCMD.replace(ffmpegCMD.find("^^^"),3,R"( -f yuv4mpegpipe - | %Output_ffmpeg% -hide_banner -f yuv4mpegpipe -i pipe:0 )"+*replaceOption);
+
+
+	//开始运行ffmpeg
+	//system("echo %line%>>编码日志.log");
+	//system(R"(echo %date:~0,10%--%time:=0%>>编码日志.log)");
+
+	system(ffmpegCMD.c_str());
+
+	//system(R"(echo %date:~0,10%--%time:=0%>>编码日志.log)");
+	//system("echo %line%>>编码日志.log");
+
+
+	exeExit();
+	return 0;
+}
