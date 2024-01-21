@@ -97,8 +97,8 @@ reInputffmpegCMD:
 	getline(cin,ffmpegCMD);
 
 
-	//检查命令合法性
-	{
+	{//检查命令合法性
+
 		int CvideoNum=getSubstringNum(ffmpegCMD,R"("-c:v")");//检查"-c:v"
 		if(CvideoNum<1){
 			cout<<"-输入的命令有bug-\n<视频编码器位置缺失>\n(!未知错误)"<<endl;
@@ -122,19 +122,31 @@ reInputffmpegCMD:
 			exeExit();
 			return 1;
 		}
-	}
 
-	if(ffmpegCMD.find("/")!=string::npos){//检查"/"
-		cout<<"\n-输入的命令warning-\n<'/'可能非法>\n"
-			<<"选择  C:自动替换'/'  R:重新输入命令  P:忽略warning"<<endl;
-		switch(system("choice /c crp")){
-			case 1:
-				replaceAllSubstring(ffmpegCMD,":\\/",":\\"),replaceAllSubstring(ffmpegCMD,"/","\\");
-				cout<<"\n替换后的命令:\n"<<ffmpegCMD<<"\n\n选择  C:继续程序  R:重新输入命令"<<endl;
-				if(system("choice /c cr")==2)goto reInputffmpegCMD;
-				break;
-			case 2:goto reInputffmpegCMD;
-			case 3:break;
+		int replacePointNum=getSubstringNum(ffmpegCMD,"^^^");//检查"^^^"
+		if(replacePointNum<1){
+			cout<<"-输入的命令有bug-\n<\"^^^\"位置缺失>"<<endl;
+			exeExit();
+			return 1;
+		}
+		else if(replacePointNum>1){
+			cout<<"-输入的命令有bug-\n<\"^^^\"位置("<<replacePointNum<<")大于1>\n(!未知错误)"<<endl;
+			exeExit();
+			return 1;
+		}
+
+		if(ffmpegCMD.find("/")!=string::npos){//检查"/"
+			cout<<"\n-输入的命令warning-\n<'/'可能非法>\n"
+				<<"选择  C:自动替换'/'  R:重新输入命令  P:忽略warning"<<endl;
+			switch(system("choice /c crp")){
+				case 1:
+					replaceAllSubstring(ffmpegCMD,":\\/",":\\"),replaceAllSubstring(ffmpegCMD,"/","\\");
+					cout<<"\n替换后的命令:\n"<<ffmpegCMD<<"\n\n选择  C:继续程序  R:重新输入命令"<<endl;
+					if(system("choice /c cr")==2)goto reInputffmpegCMD;
+					break;
+				case 2:goto reInputffmpegCMD;
+				case 3:break;
+			}
 		}
 	}
 
@@ -156,6 +168,7 @@ reselectOptionNum:
 		cout<<"非法输入!"<<endl;
 		cin>>optionNum;
 	}
+	cin.ignore();
 	string*replaceOption;
 	switch(optionNum){
 		case 0:
