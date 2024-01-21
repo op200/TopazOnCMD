@@ -7,6 +7,15 @@
 
 using namespace std;
 
+void inputToContinue(string reference){
+	string input;
+	cout<<"输入\""<<reference<<"\"以继续"<<endl;
+	for(;;){
+		getline(cin,input);
+		if(input==reference)return;
+	}
+}
+
 void exeExit(){
 	string input;
 	cout<<R"(输入"exit"退出程序)"<<endl;
@@ -20,6 +29,13 @@ int getSubstringNum(string inputStr,const char*Substring){//获取子串个数
 	size_t findStart,Num=0;
 	for(findStart=0;(findStart=inputStr.find(Substring,findStart)+1)-1!=string::npos;Num++);
 	return Num;
+}
+
+void replaceAllSubstring(string&inputStr,const char*beRe,const char*reTo){//替换所有子串
+	size_t findStart=inputStr.find(beRe);
+	for(;findStart!=string::npos;findStart=inputStr.find(beRe)){
+		inputStr.replace(findStart,strlen(beRe),reTo);
+	}
 }
 
 int main(){
@@ -69,52 +85,60 @@ int main(){
 	system("%Output_ffmpeg% -version");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),FOREGROUND_INTENSITY|FOREGROUND_RED);
 	cout<<left<<setfill('*')<<setw(120)<<"仔细检查各项信息，确认无误后再进行下一步!"<<endl;
-	{
-		string input;
-		cout<<R"(输入"continue"继续程序)"<<endl;
-		for(;;){
-			getline(cin,input);
-			if(input=="continue")break;
-		}
-	}
+	inputToContinue("continue");
 	system("color 70");
 	system("cls");
 
 
 	//传入ffmpeg命令
 	string ffmpegCMD;
+reInputffmpegCMD:
 	cout<<"输入ffmpeg命令:\n";
 	getline(cin,ffmpegCMD);
 
 
 	//检查命令合法性
-	int CvideoNum=getSubstringNum(ffmpegCMD,R"("-c:v")");
-	if(CvideoNum<1){
-		cout<<"-输入的命令有bug-\n<视频编码器位置缺失>\n(!未知错误)"<<endl;
-		exeExit();
-		return 1;
-	}
-	else if(CvideoNum>1){
-		cout<<"-输入的命令有bug-\n<视频编码器位置("<<CvideoNum<<")大于1>\n(!检查Topaz设置)"<<endl;
-		exeExit();
-		return 1;
+	{
+		int CvideoNum=getSubstringNum(ffmpegCMD,R"("-c:v")");//检查"-c:v"
+		if(CvideoNum<1){
+			cout<<"-输入的命令有bug-\n<视频编码器位置缺失>\n(!未知错误)"<<endl;
+			exeExit();
+			return 1;
+		}
+		else if(CvideoNum>1){
+			cout<<"-输入的命令有bug-\n<视频编码器位置("<<CvideoNum<<")大于1>\n(!检查Topaz设置)"<<endl;
+			exeExit();
+			return 1;
+		}
+
+		int CaudioNum=getSubstringNum(ffmpegCMD,R"("-an")");//检查"-an"
+		if(CaudioNum<1){
+			cout<<"-输入的命令有bug-\n<静音命令位置缺失>\n(!仅支持静音输出\n!检查Topaz设置)"<<endl;
+			exeExit();
+			return 1;
+		}
+		else if(CaudioNum>1){
+			cout<<"-输入的命令有bug-\n<静音命令位置("<<CaudioNum<<")大于1>\n(!未知错误)"<<endl;
+			exeExit();
+			return 1;
+		}
 	}
 
-	int CaudioNum=getSubstringNum(ffmpegCMD,R"("-an")");
-	if(CaudioNum<1){
-		cout<<"-输入的命令有bug-\n<静音命令位置缺失>\n(!仅支持静音输出\n!检查Topaz设置)"<<endl;
-		exeExit();
-		return 1;
-	}
-	else if(CaudioNum>1){
-		cout<<"-输入的命令有bug-\n<静音命令位置("<<CaudioNum<<")大于1>\n(!未知错误)"<<endl;
-		exeExit();
-		return 1;
+	if(ffmpegCMD.find("/")!=string::npos){//检查"/"
+		cout<<"\n-输入的命令warring-\n<'/'可能非法>\n"
+			<<"选择  C:自动替换'/'  R:重新输入命令"<<endl;
+		if(system("choice /c cr")==1){
+			replaceAllSubstring(ffmpegCMD,":\\/",":\\"),replaceAllSubstring(ffmpegCMD,"/","\\");
+			cout<<"\n替换后的命令:\n"<<ffmpegCMD<<"\n\n选择  C:继续程序  R:重新输入命令"<<endl;
+			if(system("choice /c cr")==2)goto reInputffmpegCMD;
+		}
+		else goto reInputffmpegCMD;
+
 	}
 
 
 	//替换子串
-	cout<<"输入编号(整数)以选择option:\n"
+	cout<<"输入编号(整数)以选择option预设:\n"
 		<<"编号  说明\n"
 		<<"00:   自定义\n"
 		<<"01:   x265  高画质-快速\n"
