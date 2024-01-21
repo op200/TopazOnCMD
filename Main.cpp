@@ -34,7 +34,12 @@ int main(){
 		param4=R"(:cbqpoffs=-1:crqpoffs=-1:keyint=250:pbratio=1.2)",
 		option01=videoC_x265+"\""+param1+param2+param3+param4+"\"",
 
-		option02=R"(-c:v h264_nvenc -preset lossless -pix_fmt yuv420p10le)";
+		option02=R"(-c:v h264_nvenc -preset lossless -pix_fmt yuv420p10le)",
+
+		param5=R"(crf=20:qpmin=13:qpmax=24:me=umh:merange=44:aq-strength=1.2:tu-intra-depth=3)",
+		param6=R"(:rdoq-level=0:psy-rdoq=0.8:psy-rd=2:qcomp=0.7:weightb=1:deblock=-1,-1:min-keyint=2)",
+		param7=R"(:cbqpoffs=-1:crqpoffs=-1:keyint=250:pbratio=1.2:min-cu-size=32:limit-tu=2)",
+		option03=videoC_x265+"\""+param5+param2+param6+param7+"\"";
 
 
 	{//读取ini，以配置环境变量
@@ -114,6 +119,7 @@ int main(){
 		<<"00:   自定义\n"
 		<<"01:   x265  高画质-快速\n"
 		<<"02:   h264_nvenc-lossless\n"
+		<<"03:   x265  高画质-快速-高分辨率速率优化参数\n"
 		<<endl;
 	int optionNum;
 reselectOptionNum:
@@ -135,6 +141,8 @@ reselectOptionNum:
 			replaceOption=&option01;break;
 		case 2:
 			replaceOption=&option02;break;
+		case 3:
+			replaceOption=&option03;break;
 		default:
 			cout<<"该option不存在!"<<endl;
 			goto reselectOptionNum;

@@ -11,7 +11,8 @@
 **  **  
 ## 使用
 打开Topaz，调整好要输出的视频，导出选项设置为 None音频 和 mkv  
-Ctrl+Shift+E导出命令，**在命令末尾的输出路径前添加`^^^`**，**检查输出符合Windows路径标准**  
+Ctrl+Shift+E导出命令，**在命令末尾的输出路径前添加`^^^`**，示例:`…前文略… "use_metadata_tags+write_colr" ^^^ "E:/视频/输出_tvai.mkv"`  
+**检查输出路径名符合Windows路径标准**  
 将改好的命令输入到TopazOnCMD中  
 **  **  
 ## 原理
