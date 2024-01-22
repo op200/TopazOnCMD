@@ -4,6 +4,7 @@
 #include<fstream>
 #include<iomanip>
 #include<Windows.h>
+#include<regex>
 
 using namespace std;
 
@@ -31,6 +32,11 @@ int getSubstringNum(string inputStr,const char*Substring){//获取子串个数
 	return Num;
 }
 
+int getSubstringNumWithRegex(string inputStr,regex Substring){//用正则表达式获取子串个数
+	sregex_iterator end,begin(inputStr.begin(),inputStr.end(),Substring);
+	return distance(begin,end);
+}
+
 void replaceAllSubstring(string&inputStr,const char*beRe,const char*reTo){//替换所有子串
 	size_t findStart=inputStr.find(beRe);
 	for(;findStart!=string::npos;findStart=inputStr.find(beRe)){
@@ -41,25 +47,24 @@ void replaceAllSubstring(string&inputStr,const char*beRe,const char*reTo){//替换
 int main(){
 	system("color 70");
 	string
+		ffmpegCMD,
+
 		option00,
 
 		videoC_x265=R"(-c:v libx265 -pix_fmt yuv420p10le -x265-params )",
 		param1=R"(crf=19:qpmin=13:qpmax=24:me=star:merange=57:aq-strength=1.2:tu-intra-depth=4)",
 		param2=R"(:aq-mode=4:bframes=16:ref=8:rd=5:subme=3:rc-lookahead=80:sao=0:rect=1:amp=0)",
-		param3=R"(:rdoq-level=0:psy-rdoq=0.8:psy-rd=2:qcomp=0.72:weightb=1:deblock=-1,-1:min-keyint=2)",
+		param3=R"(:rdoq-level=0:psy-rdoq=0.8:psy-rd=2:qcomp=0.7:weightb=1:deblock=-1,-1:min-keyint=2)",
 		param4=R"(:cbqpoffs=-1:crqpoffs=-1:keyint=250:pbratio=1.2)",
 		option01=videoC_x265+"\""+param1+param2+param3+param4+"\"",
 
-		option02=R"(-c:v h264_nvenc -preset lossless -pix_fmt yuv420p10le)",
-
 		param5=R"(crf=20:qpmin=13:qpmax=24:me=umh:merange=44:aq-strength=1.2:tu-intra-depth=3)",
-		param6=R"(:rdoq-level=0:psy-rdoq=0.8:psy-rd=2:qcomp=0.7:weightb=1:deblock=-1,-1:min-keyint=2)",
-		param7=R"(:cbqpoffs=-1:crqpoffs=-1:keyint=250:pbratio=1.2:min-cu-size=32:limit-tu=2)",
-		option03=videoC_x265+"\""+param5+param2+param6+param7+"\"";
+		option02=videoC_x265+"\""+param5+param2+param3+param4+":min-cu-size=32:limit-tu=2\"",
+
+		option11=R"(-c:v h264_nvenc -preset lossless -pix_fmt yuv420p10le)";
 
 
 	{//读取ini，以配置环境变量
-		_putenv("line=———————————————————————————————————");
 		char fillCh='-';string inputStr;
 		ifstream ini;
 		ini.open("TopazOnCMD.ini");
@@ -91,13 +96,12 @@ int main(){
 
 
 	//传入ffmpeg命令
-	string ffmpegCMD;
-reInputffmpegCMD:
+InputffmpegCMD:
 	cout<<"输入ffmpeg命令:\n";
 	getline(cin,ffmpegCMD);
 
-
-	{//检查命令合法性
+	//检查命令合法性并部分替换
+	{
 
 		int CvideoNum=getSubstringNum(ffmpegCMD,R"("-c:v")");//检查"-c:v"
 		if(CvideoNum<1){
@@ -123,6 +127,21 @@ reInputffmpegCMD:
 			return 1;
 		}
 
+		if(ffmpegCMD.find("/")!=string::npos){//检查"/"
+			cout<<"\n-输入的命令warning-\n<'/'可能非法>\n"
+				<<"选择  C:自动替换'/'  R:重新输入命令  P:忽略warning"<<endl;
+			switch(system("choice /c crp")){
+				case 1:
+					replaceAllSubstring(ffmpegCMD,":\\/",":\\"),replaceAllSubstring(ffmpegCMD,"/","\\");
+					cout<<"\n替换后的命令:\n"<<ffmpegCMD<<"\n\n选择  C:继续程序  R:重新输入命令"<<endl;
+					if(system("choice /c cr")==2)goto InputffmpegCMD;
+					break;
+				case 2:goto InputffmpegCMD;
+				case 3:break;
+			}
+		}
+
+		/*
 		int replacePointNum=getSubstringNum(ffmpegCMD,"^^^");//检查"^^^"
 		if(replacePointNum<1){
 			cout<<"-输入的命令有bug-\n<\"^^^\"位置缺失>"<<endl;
@@ -134,19 +153,24 @@ reInputffmpegCMD:
 			exeExit();
 			return 1;
 		}
+		*/
 
-		if(ffmpegCMD.find("/")!=string::npos){//检查"/"
-			cout<<"\n-输入的命令warning-\n<'/'可能非法>\n"
-				<<"选择  C:自动替换'/'  R:重新输入命令  P:忽略warning"<<endl;
-			switch(system("choice /c crp")){
-				case 1:
-					replaceAllSubstring(ffmpegCMD,":\\/",":\\"),replaceAllSubstring(ffmpegCMD,"/","\\");
-					cout<<"\n替换后的命令:\n"<<ffmpegCMD<<"\n\n选择  C:继续程序  R:重新输入命令"<<endl;
-					if(system("choice /c cr")==2)goto reInputffmpegCMD;
-					break;
-				case 2:goto reInputffmpegCMD;
-				case 3:break;
-			}
+		int pathPointNum=getSubstringNumWithRegex(ffmpegCMD,regex(R"("[a-zA-Z]:(\\[^\\/:*?<>|"\n]*)+")"));
+		if(pathPointNum<2){
+			cout<<"-输入的命令有bug-\n<路径位置位置缺失>"<<endl;
+			exeExit();
+			return 1;
+		}
+		else if(pathPointNum>2){
+			cout<<"-输入的命令有bug-\n<路径位置("<<pathPointNum<<")大于2>"<<endl;
+			exeExit();
+			return 1;
+		}
+		{
+			regex regex(R"("[a-zA-Z]:(\\[^\\/:*?<>|"\n]*)+")");
+			sregex_iterator end,pos(ffmpegCMD.begin(),ffmpegCMD.end(),regex);
+			pos++;
+			ffmpegCMD.insert(pos->position()," ^^^ ");
 		}
 	}
 
@@ -156,11 +180,11 @@ reInputffmpegCMD:
 		<<"编号  说明\n"
 		<<"00:   自定义\n"
 		<<"01:   x265  高画质-快速\n"
-		<<"02:   h264_nvenc-lossless\n"
-		<<"03:   x265  高画质-快速-高分辨率速率优化参数\n"
+		<<"02:   x265  高画质-快速-高分辨率速率优化参数\n"
+		<<"11:   h264_nvenc-lossless\n"
 		<<endl;
 	int optionNum;
-reselectOptionNum:
+ReselectOptionNum:
 	cin>>optionNum;
 	while(cin.fail()){
 		cin.clear();
@@ -180,11 +204,11 @@ reselectOptionNum:
 			replaceOption=&option01;break;
 		case 2:
 			replaceOption=&option02;break;
-		case 3:
-			replaceOption=&option03;break;
+		case 11:
+			replaceOption=&option11;break;
 		default:
 			cout<<"该option不存在!"<<endl;
-			goto reselectOptionNum;
+			goto ReselectOptionNum;
 	}
 	size_t replaceStart=ffmpegCMD.find(R"("-c:v")"),replaceEnd=ffmpegCMD.find(R"("-an")");
 	ffmpegCMD.replace(replaceStart,replaceEnd-replaceStart-1," -pix_fmt yuv422p ");
@@ -194,13 +218,7 @@ reselectOptionNum:
 
 
 	//开始运行ffmpeg
-	//system("echo %line%>>编码日志.log");
-	//system(R"(echo %date:~0,10%--%time:=0%>>编码日志.log)");
-
 	system(ffmpegCMD.c_str());
-
-	//system(R"(echo %date:~0,10%--%time:=0%>>编码日志.log)");
-	//system("echo %line%>>编码日志.log");
 
 
 	exeExit();
