@@ -11,9 +11,9 @@
 **  **  
 ## 使用
 打开Topaz，调整好要输出的视频，导出选项设置为 None音频 和 mkv  
-Ctrl+Shift+E导出命令，**在命令末尾的输出路径前添加`^^^`**，示例:`…前文略… "use_metadata_tags+write_colr" ^^^ "E:/视频/输出_tvai.mkv"`  
-**检查输出路径名符合Windows路径标准**  
-将改好的命令输入到TopazOnCMD中  
+Ctrl+Shift+E导出命令  
+将命令输入到TopazOnCMD中  
+*(**如果版本低于v1.0**，需要在命令末尾的输出路径前添加`^^^`，示例:`…前文略… "use_metadata_tags+write_colr" ^^^ "E:/视频/输出_tvai.mkv"`)*  
 **  **  
 ## 原理
 找到`"-c:v"`和`"-an"`，删除二者之间（不包括`"-an"`）的字符  

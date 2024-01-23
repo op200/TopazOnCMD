@@ -64,7 +64,8 @@ int main(){
 		option11=R"(-c:v h264_nvenc -preset lossless -pix_fmt yuv420p10le)";
 
 
-	{//读取ini，以配置环境变量
+	//读取ini，以配置环境变量
+	{
 		char fillCh='-';string inputStr;
 		ifstream ini;
 		ini.open("TopazOnCMD.ini");
@@ -109,7 +110,7 @@ InputffmpegCMD:
 			exeExit();
 			return 1;
 		}
-		else if(CvideoNum>1){
+		if(CvideoNum>1){
 			cout<<"-输入的命令有bug-\n<视频编码器位置("<<CvideoNum<<")大于1>\n(!检查Topaz设置)"<<endl;
 			exeExit();
 			return 1;
@@ -121,13 +122,14 @@ InputffmpegCMD:
 			exeExit();
 			return 1;
 		}
-		else if(CaudioNum>1){
+		if(CaudioNum>1){
 			cout<<"-输入的命令有bug-\n<静音命令位置("<<CaudioNum<<")大于1>\n(!未知错误)"<<endl;
 			exeExit();
 			return 1;
 		}
 
-		if(ffmpegCMD.find("/")!=string::npos){//检查"/"
+		//检查"/"
+		if(ffmpegCMD.find("/")!=string::npos){
 			cout<<"\n-输入的命令warning-\n<'/'可能非法>\n"
 				<<"选择  C:自动替换'/'  R:重新输入命令  P:忽略warning"<<endl;
 			switch(system("choice /c crp")){
@@ -141,31 +143,19 @@ InputffmpegCMD:
 			}
 		}
 
-		/*
-		int replacePointNum=getSubstringNum(ffmpegCMD,"^^^");//检查"^^^"
-		if(replacePointNum<1){
-			cout<<"-输入的命令有bug-\n<\"^^^\"位置缺失>"<<endl;
-			exeExit();
-			return 1;
-		}
-		else if(replacePointNum>1){
-			cout<<"-输入的命令有bug-\n<\"^^^\"位置("<<replacePointNum<<")大于1>\n(!未知错误)"<<endl;
-			exeExit();
-			return 1;
-		}
-		*/
-
+		//路径检测
 		int pathPointNum=getSubstringNumWithRegex(ffmpegCMD,regex(R"("[a-zA-Z]:(\\[^\\/:*?<>|"\n]*)+")"));
 		if(pathPointNum<2){
 			cout<<"-输入的命令有bug-\n<路径位置位置缺失>"<<endl;
 			exeExit();
 			return 1;
 		}
-		else if(pathPointNum>2){
+		if(pathPointNum>2){
 			cout<<"-输入的命令有bug-\n<路径位置("<<pathPointNum<<")大于2>"<<endl;
 			exeExit();
 			return 1;
 		}
+		//插入"^^^"
 		{
 			regex regex(R"("[a-zA-Z]:(\\[^\\/:*?<>|"\n]*)+")");
 			sregex_iterator end,pos(ffmpegCMD.begin(),ffmpegCMD.end(),regex);
