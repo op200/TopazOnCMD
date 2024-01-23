@@ -18,6 +18,6 @@ Ctrl+Shift+E导出命令
 ## 原理
 找到`"-c:v"`和`"-an"`，删除二者之间（不包括`"-an"`）的字符  
 将字符头部的`ffmpeg`替换为`%TVAI_ffmpeg%`  
-将`^^^`替换为`ffmpeg管道 -pix_fmt yuv422p yuv4mpegpipe -> %Output_ffmpeg% + 编码器参数`  
+在第二个路径前添加`ffmpeg管道 -pix_fmt yuv422p yuv4mpegpipe -> %Output_ffmpeg% + 编码器参数`  
 **  **  
 第一次用C++写程序，也是第一次用Git，所以整个项目都是一堆问题，就当瞎写着玩的（
