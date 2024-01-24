@@ -32,7 +32,7 @@ int getSubstringNum(string inputStr,const char*Substring){//获取子串个数
 	return Num;
 }
 
-int getSubstringNumWithRegex(string inputStr,regex Substring){//用正则表达式获取子串个数
+int getSubstringNum(string inputStr,regex Substring){//用正则表达式获取子串个数
 	sregex_iterator end,begin(inputStr.begin(),inputStr.end(),Substring);
 	return distance(begin,end);
 }
@@ -144,7 +144,7 @@ InputffmpegCMD:
 		}
 
 		//路径检测
-		int pathPointNum=getSubstringNumWithRegex(ffmpegCMD,regex(R"("[a-zA-Z]:(\\[^\\/:*?<>|"\n]*)+")"));
+		int pathPointNum=getSubstringNum(ffmpegCMD,regex(R"("[a-zA-Z]:(\\[^\\/:*?<>|"\n]*)+")"));
 		if(pathPointNum<2){
 			cout<<"-输入的命令有bug-\n<路径位置位置缺失>"<<endl;
 			exeExit();
