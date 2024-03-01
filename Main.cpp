@@ -17,12 +17,12 @@ void inputToContinue(string reference){
 	}
 }
 
-void exeExit(){
+void exeExit(int errorLog){
 	string input;
 	cout<<R"(输入"exit"退出程序)"<<endl;
 	for(;;){
 		getline(cin,input);
-		if(input=="exit")return;
+		if(input=="exit")exit(errorLog);
 	}
 }
 
@@ -107,25 +107,21 @@ InputffmpegCMD:
 		int CvideoNum=getSubstringNum(ffmpegCMD,R"("-c:v")");//检查"-c:v"
 		if(CvideoNum<1){
 			cout<<"-输入的命令有bug-\n<视频编码器位置缺失>\n(!未知错误)"<<endl;
-			exeExit();
-			return 1;
+			exeExit(1);
 		}
 		if(CvideoNum>1){
 			cout<<"-输入的命令有bug-\n<视频编码器位置("<<CvideoNum<<")大于1>\n(!检查Topaz设置)"<<endl;
-			exeExit();
-			return 1;
+			exeExit(1);
 		}
 
 		int CaudioNum=getSubstringNum(ffmpegCMD,R"("-an")");//检查"-an"
 		if(CaudioNum<1){
 			cout<<"-输入的命令有bug-\n<静音命令位置缺失>\n(!仅支持静音输出\n!检查Topaz设置)"<<endl;
-			exeExit();
-			return 1;
+			exeExit(1);
 		}
 		if(CaudioNum>1){
 			cout<<"-输入的命令有bug-\n<静音命令位置("<<CaudioNum<<")大于1>\n(!未知错误)"<<endl;
-			exeExit();
-			return 1;
+			exeExit(1);
 		}
 
 		//检查"/"
@@ -147,13 +143,11 @@ InputffmpegCMD:
 		int pathPointNum=getSubstringNum(ffmpegCMD,regex(R"("[a-zA-Z]:(\\[^\\/:*?<>|"\n]*)+")"));
 		if(pathPointNum<2){
 			cout<<"-输入的命令有bug-\n<路径位置位置缺失>"<<endl;
-			exeExit();
-			return 1;
+			exeExit(1);
 		}
 		if(pathPointNum>2){
 			cout<<"-输入的命令有bug-\n<路径位置("<<pathPointNum<<")大于2>"<<endl;
-			exeExit();
-			return 1;
+			exeExit(1);
 		}
 		//插入"^^^"
 		{
@@ -211,6 +205,5 @@ ReselectOptionNum:
 	system(ffmpegCMD.c_str());
 
 
-	exeExit();
-	return 0;
+	exeExit(0);
 }
